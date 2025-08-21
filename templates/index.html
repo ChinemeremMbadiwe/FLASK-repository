@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Tutor</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+    <div class="header">
+        <button class="menu-toggle" id="menu-toggle">☰</button>
+        <span class="welcome-user">{{ current_user.username }}</span>
+    </div>
+    
+    <div class="page-wrapper">
+        <div class="sidebar">
+            <div class="box2"></div>
+            <div class="box3">
+                
+                <h4>Chat History<button class="clear-history-button" onclick="clearChatHistory()">
+                    <i class="fas fa-trash-can"></i>
+                </button></h4>
+                <div id="chat-sessions-list" class="chat-sessions-list">
+                    {% if chat_sessions %}
+                        {% for session in chat_sessions %}
+                            <button class="chat-session-item {% if session.id == current_chat_session_id %}active{% endif %}" 
+                                    data-session-id="{{ session.id }}" 
+                                    onclick="loadChatSession('{{ session.id }}')">
+                                {{ session.title | default('Untitled Chat') }}
+                            </button>
+                        {% endfor %}
+                    {% else %}
+                        <p>No previous chats.</p>
+                    {% endif %}
+                </div>
+                
+            </div>
+            <div class="box1">
+                <button class="NewChatButton" onclick="startNewChat()"><i class="fas fa-plus"></i> New Chat</button>
+                <button class="settings-help-button" onclick="toggleSettingsPopup()"><i class="fas fa-cog"></i> Settings and Help</button>
+                <button class="logout-button" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="flash-message-container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <div class="container" onclick="hideSidebar()">
+                <h2>AI Tutor</h2>
+            
+                {% if current_user.is_authenticated %}
+                <div class="chat-box" id="chat-box">
+                    {% if current_chat_messages %}
+                        {% for message in current_chat_messages %}
+                            <div class="chat-message {% if message.sender == 'user' %}user-message{% else %}tutor-message{% endif %}" data-message-id="{{ message.id }}">
+                                <p>{{ message.text }}</p>
+                                {% if message.sender == 'ai' %}
+                                    <div class="rating-options-container">
+                                        <div class="rating-buttons">
+                                            <button class="icon-button rate-button {% if message.rating == 1 %}active{% endif %}" onclick="rateResponse('{{ message.id }}', 1)">
+                                                <i class="fas fa-thumbs-up"></i>
+                                            </button>
+                                            <button class="icon-button rate-button {% if message.rating == 0 %}active{% endif %}" onclick="rateResponse('{{ message.id }}', 0)">
+                                                <i class="fas fa-thumbs-down"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <select id="subject">
+                    <option value="" disabled selected>Select a subject</option>
+                    <option value="general">General</option>
+                    <option value="math">Math</option>
+                    <option value="science">Science</option>
+                    <option value="history">History</option>
+                    <option value="english">English</option>
+                    <option value="programming">Programming</option>
+                    <option value="art">Art</option>
+                    <option value="music">Music</option>
+                    <option value="geography">Geography</option>
+                </select>
+                <div class="input-send-container">
+                    <input type="text" id="userInput" placeholder="Ask The Tutor"/>
+                    
+                    <label for="fileAttachment" class="icon-button" id="fileAttachmentLabel">
+                        <i class="fas fa-paperclip"></i>
+                        <span class="file-name-popup" id="fileNamePopup"></span>
+                    </label>
+                    <input type="file" id="fileAttachment" style="display: none;" onchange="handleFileSelect(event)">
+                
+                    <button class="icon-button" onclick="startDictation()"><i class="fas fa-microphone"></i></button>
+                    <button class="icon-button" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                </div>
+                <div id="feedback-status" class="feedback-message"></div>
+
+                {% else %}
+                <p class="welcome-message">Please login or register to start chatting with the AI tutor.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div id="settingsPopup" class="settings-popup">
+            <div class="settings-popup-content">
+                <span class="close-button" onclick="toggleSettingsPopup()">&times;</span>
+                <h3>Settings</h3>
+                <div class="setting-item">
+                    <span>Dark Mode:</span>
+                    <label class="switch">
+                        <input type="checkbox" id="darkModeToggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <a href="https://www.example.com/help" target="_blank" class="help-button">Go to Help Page</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.getElementById('menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            
+            // Apply saved theme preference on load
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.body.classList.add(savedTheme);
+                if (savedTheme === 'dark-mode') {
+                    darkModeToggle.checked = true;
+                }
+            } else {
+                // Default to dark mode if no preference is saved
+                document.body.classList.add('dark-mode');
+                darkModeToggle.checked = true;
+            }
+
+            if (menuToggle && sidebar) {
+                menuToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('visible');
+                });
+            }
+
+            // Dark mode toggle functionality
+            darkModeToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    document.body.classList.add('dark-mode');
+                    document.body.classList.remove('light-mode');
+                    localStorage.setItem('theme', 'dark-mode');
+                } else {
+                    document.body.classList.add('light-mode');
+                    document.body.classList.remove('dark-mode');
+                    localStorage.setItem('theme', 'light-mode');
+                }
+            });
+
+            // Handle clearing the file name popup
+            document.getElementById('userInput').addEventListener('input', clearFileNameDisplay);
+            document.getElementById('fileAttachment').addEventListener('change', () => {
+                if (!document.getElementById('fileAttachment').files.length) {
+                    clearFileNameDisplay();
+                }
+            });
+            clearFileNameDisplay(); // Clear file display on initial load if no file is selected
+            
+            // Auto-scroll to the bottom of the chatbox on load
+            const chatBox = document.getElementById("chat-box");
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+
+        function hideSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar.classList.contains('visible')) {
+                sidebar.classList.remove('visible');
+            }
+        }
+
+        function clearFileNameDisplay() {
+            const fileNamePopup = document.getElementById('fileNamePopup');
+            const fileAttachmentLabel = document.getElementById('fileAttachmentLabel');
+            fileNamePopup.textContent = '';
+            fileAttachmentLabel.classList.remove('has-file');
+        }
+
+        async function sendMessage() {
+            const subject = document.getElementById("subject").value;
+            const userInput = document.getElementById("userInput");
+            const messageText = userInput.value;
+            const fileInput = document.getElementById("fileAttachment");
+            const uploadedFile = fileInput.files[0];
+            const chatBox = document.getElementById("chat-box");
+
+            if (!messageText.trim() && !uploadedFile) {
+                alert("Please enter a message or select a file.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('message', `You are a ${subject} tutor. ` + messageText);
+            if (uploadedFile) {
+                formData.append('file', uploadedFile);
+            }
+
+            let userDisplayMessage = messageText;
+            if (uploadedFile) {
+                userDisplayMessage += ` (Attached: ${uploadedFile.name})`;
+            }
+            chatBox.innerHTML += `<div class="chat-message user-message"><p>${userDisplayMessage}</p></div>`;
+                
+            const thinkingMessage = document.createElement('div');
+            thinkingMessage.classList.add('chat-message', 'tutor-message');
+            thinkingMessage.innerHTML = `<p> Thinking...</p>`;
+            chatBox.appendChild(thinkingMessage);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    body: formData 
+                });
+                
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Update the thinking message with the actual reply
+                    thinkingMessage.innerHTML = `<p>${data.reply}</p>`;
+                    thinkingMessage.dataset.messageId = data.ai_message_id; // Store AI message ID for rating
+                    
+                    // Create and append the rating options
+                    const ratingContainer = document.createElement('div');
+                    ratingContainer.classList.add('rating-options-container'); 
+
+                    const ratingButtons = document.createElement('div');
+                    ratingButtons.classList.add('rating-buttons');
+
+                    const thumbsUpButton = document.createElement('button');
+                    thumbsUpButton.classList.add('icon-button', 'rate-button');
+                    thumbsUpButton.innerHTML = '<i class="fas fa-thumbs-up"></i>';
+                    thumbsUpButton.onclick = () => rateResponse(data.ai_message_id, 1);
+                    ratingButtons.appendChild(thumbsUpButton);
+
+                    const thumbsDownButton = document.createElement('button');
+                    thumbsDownButton.classList.add('icon-button', 'rate-button');
+                    thumbsDownButton.innerHTML = '<i class="fas fa-thumbs-down"></i>';
+                    thumbsDownButton.onclick = () => rateResponse(data.ai_message_id, 0);
+                    ratingButtons.appendChild(thumbsDownButton);
+
+                    ratingContainer.appendChild(ratingButtons);
+                    thinkingMessage.appendChild(ratingContainer); 
+
+                    // Update sidebar with new session if it was a new chat
+                    if (data.session_id && document.querySelector(`.chat-session-item[data-session-id="${data.session_id}"]`) === null) {
+                        const newSessionButton = document.createElement('button');
+                        newSessionButton.classList.add('chat-session-item');
+                        newSessionButton.dataset.sessionId = data.session_id;
+                        newSessionButton.textContent = "New Chat"; // Or a dynamic title from the server
+                        newSessionButton.onclick = () => loadChatSession(data.session_id);
+                        document.getElementById('chat-sessions-list').prepend(newSessionButton); // Add to the top
+                    }
+                    // Highlight the current session in the sidebar
+                    document.querySelectorAll('.chat-session-item').forEach(btn => btn.classList.remove('active'));
+                    const currentSessionButton = document.querySelector(`.chat-session-item[data-session-id="${data.session_id}"]`);
+                    if (currentSessionButton) {
+                        currentSessionButton.classList.add('active');
+                    }
+
+                } else {
+                    thinkingMessage.innerHTML = `<p>Error: ${data.error}</p>`;
+                    thinkingMessage.classList.remove('tutor-message');
+                    thinkingMessage.classList.add('error-message');
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                thinkingMessage.innerHTML = `<p>Network error or server unreachable.</p>`;
+                thinkingMessage.classList.remove('tutor-message');
+                thinkingMessage.classList.add('error-message');
+            }
+
+            userInput.value = ''; 
+            fileInput.value = ''; 
+            clearFileNameDisplay(); 
+            chatBox.scrollTop = chatBox.scrollHeight; 
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0]; 
+            const fileNamePopup = document.getElementById('fileNamePopup');
+            const fileAttachmentLabel = document.getElementById('fileAttachmentLabel');
+
+            if (file) {
+                fileNamePopup.textContent = file.name;
+                fileAttachmentLabel.classList.add('has-file'); 
+            } else {
+                clearFileNameDisplay(); 
+            }
+        }
+
+        async function rateResponse(messageId, score) {
+            try {
+                const response = await fetch('/rate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message_id: messageId, score: score})
+                });
+                if (response.ok) {
+                    const buttons = document.querySelector(`.chat-message[data-message-id="${messageId}"] .rating-buttons`);
+                    if (buttons) {
+                        buttons.querySelectorAll('.rate-button').forEach(btn => btn.classList.remove('active'));
+                        if (score === 1) {
+                            buttons.querySelector('.fa-thumbs-up').closest('button').classList.add('active');
+                        } else if (score === 0) {
+                            buttons.querySelector('.fa-thumbs-down').closest('button').classList.add('active');
+                        }
+                    }
+                    console.log('Rating saved successfully!');
+                } else {
+                    console.error('Failed to save rating:', await response.text());
+                }
+            } catch (error) {
+                console.error('Error sending rating:', error);
+            }
+        }
+
+        function startDictation() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false; // Get final results only
+            recognition.maxAlternatives = 1; // Only get the most likely result
+
+            recognition.onresult = function(event) {
+                document.getElementById("userInput").value = event.results[0][0].transcript;
+            };
+
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+                alert('Speech recognition error: ' + event.error);
+            };
+
+            recognition.start();
+        }
+
+        const userInput = document.getElementById("userInput");
+        userInput.addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        function logout() {
+            fetch('/logout', { method: 'POST' })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/login';
+                    } else {
+                        alert('Logout failed. Please try again.');
+                    }
+                });
+        }
+
+        function toggleSettingsPopup() {
+            const popup = document.getElementById('settingsPopup');
+            popup.classList.toggle('show');
+        }
+
+        async function startNewChat() {
+            try {
+                const response = await fetch('/new_chat_session', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                const data = await response.json();
+                if (data.success) {
+                    // Clear the current chat box
+                    document.getElementById('chat-box').innerHTML = '';
+                    // Add the new session to the sidebar
+                    const newSessionButton = document.createElement('button');
+                    newSessionButton.classList.add('chat-session-item', 'active');
+                    newSessionButton.dataset.sessionId = data.session_id;
+                    newSessionButton.textContent = data.title;
+                    newSessionButton.onclick = () => loadChatSession(data.session_id);
+                    document.getElementById('chat-sessions-list').prepend(newSessionButton);
+
+                    // Deactivate previously active session buttons
+                    document.querySelectorAll('.chat-session-item').forEach(btn => {
+                        if (btn.dataset.sessionId !== data.session_id) {
+                            btn.classList.remove('active');
+                        }
+                    });
+                    
+                    // The backend has already set the new session as current in Flask session
+                    console.log('New chat session started:', data.session_id);
+                } else {
+                    alert('Failed to start new chat session.');
+                }
+            } catch (error) {
+                console.error('Error starting new chat session:', error);
+                alert('Network error when starting new chat.');
+            }
+        }
+
+        async function loadChatSession(sessionId) {
+            try {
+                const response = await fetch(`/get_chat_history/${sessionId}`);
+                const data = await response.json();
+                if (response.ok) {
+                    const chatBox = document.getElementById('chat-box');
+                    chatBox.innerHTML = ''; // Clear current messages
+
+                    data.messages.forEach(msg => {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.classList.add('chat-message', msg.sender === 'user' ? 'user-message' : 'tutor-message');
+                        messageDiv.innerHTML = `<p>${msg.text}</p>`;
+                        
+                        // Add rating buttons for AI messages
+                        if (msg.sender === 'ai') {
+                            messageDiv.dataset.messageId = msg.id; // Assuming msg.id is passed from backend
+                            const ratingContainer = document.createElement('div');
+                            ratingContainer.classList.add('rating-options-container');
+                            const ratingButtons = document.createElement('div');
+                            ratingButtons.classList.add('rating-buttons');
+
+                            const thumbsUpButton = document.createElement('button');
+                            thumbsUpButton.classList.add('icon-button', 'rate-button');
+                            if (msg.rating === 1) thumbsUpButton.classList.add('active');
+                            thumbsUpButton.innerHTML = '<i class="fas fa-thumbs-up"></i>';
+                            thumbsUpButton.onclick = () => rateResponse(msg.id, 1);
+                            ratingButtons.appendChild(thumbsUpButton);
+
+                            const thumbsDownButton = document.createElement('button');
+                            thumbsDownButton.classList.add('icon-button', 'rate-button');
+                            if (msg.rating === 0) thumbsDownButton.classList.add('active');
+                            thumbsDownButton.innerHTML = '<i class="fas fa-thumbs-down"></i>';
+                            thumbsDownButton.onclick = () => rateResponse(msg.id, 0);
+                            ratingButtons.appendChild(thumbsDownButton);
+
+                            ratingContainer.appendChild(ratingButtons);
+                            messageDiv.appendChild(ratingContainer);
+                        }
+                        chatBox.appendChild(messageDiv);
+                    });
+                    chatBox.scrollTop = chatBox.scrollHeight; // Scroll to bottom
+
+                    // Highlight the active session in the sidebar
+                    document.querySelectorAll('.chat-session-item').forEach(btn => btn.classList.remove('active'));
+                    document.querySelector(`.chat-session-item[data-session-id="${sessionId}"]`).classList.add('active');
+
+                } else {
+                    alert('Failed to load chat history: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+                alert('Network error when loading chat history.');
+            }
+        }
+
+        async function clearChatHistory() {
+    if (confirm("Are you sure you want to delete all chat history? This action cannot be undone.")) {
+        try {
+            const response = await fetch('/clear_history', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+            const data = await response.json();
+            if (data.success) {
+                // Clear the chat box on the frontend
+                document.getElementById('chat-box').innerHTML = '';
+                // Clear the chat sessions list on the sidebar
+                document.getElementById('chat-sessions-list').innerHTML = '<p>No previous chats.</p>';
+                // Display a success message
+                alert("Chat history cleared successfully and a new chat has started.");
+                // Reload the page to fully reflect the changes from the new chat session
+                window.location.reload(); 
+            } else {
+                alert('Failed to clear chat history: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error clearing chat history:', error);
+            alert('Network error when trying to clear chat history.');
+        }
+    }
+}
+
+function showRatingPopup(messageElement) {
+    // Create the popup element
+    const popup = document.createElement('div');
+    popup.classList.add('rating-popup');
+    popup.textContent = 'Rating Recorded!';
+
+    // Append the popup to the message element
+    messageElement.appendChild(popup);
+
+    // Show the popup
+    setTimeout(() => {
+        popup.classList.add('show');
+    }, 10); // Small delay to allow the element to be rendered before applying transition
+
+    // Hide the popup after 2 seconds
+    setTimeout(() => {
+        popup.classList.remove('show');
+        // Remove the element from the DOM after it has faded out
+        setTimeout(() => {
+            popup.remove();
+        }, 300); // Wait for the transition to finish
+    }, 2000);
+}
+
+// Modify the existing rateResponse function
+async function rateResponse(messageId, score) {
+    try {
+        const response = await fetch('/rate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({message_id: messageId, score: score})
+        });
+        
+        if (response.ok) {
+            const buttons = document.querySelector(`.chat-message[data-message-id="${messageId}"] .rating-buttons`);
+            if (buttons) {
+                buttons.querySelectorAll('.rate-button').forEach(btn => btn.classList.remove('active'));
+                if (score === 1) {
+                    buttons.querySelector('.fa-thumbs-up').closest('button').classList.add('active');
+                } else if (score === 0) {
+                    buttons.querySelector('.fa-thumbs-down').closest('button').classList.add('active');
+                }
+
+                // Find the parent message element
+                const messageElement = buttons.closest('.chat-message');
+                // Call the new function to show the popup
+                showRatingPopup(messageElement);
+            }
+        } else {
+            console.error('Failed to save rating:', await response.text());
+        }
+    } catch (error) {
+        console.error('Error sending rating:', error);
+    }
+}
+    </script>
+</body>
+</html>

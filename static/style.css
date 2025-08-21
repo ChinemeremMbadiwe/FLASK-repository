@@ -1,0 +1,806 @@
+:root {
+    --dark-bg: #11111a;
+    --dark-surface: #2e3047;
+    --dark-text: #e0e0e0;
+    --dark-text-light: #a0a0a0;
+    --cyan-accent: #64bdc9;
+    --cyan-accent-dark: #3b7b86;
+    --border-color: #444;
+    --flash-success: #28a745;
+    --flash-error: #dc3545;
+    --flash-info: #007bff;
+
+    /* Light Mode Variables (default values will be overridden in .light-mode) */
+    --light-bg: #f0f2f5;
+    --light-surface: #ffffff;
+    --light-text: #333333;
+    --light-text-light: #666666;
+    --light-cyan-accent: #64bdc9;
+    --light-cyan-accent-dark: #3b7b86;
+    --light-border-color: #cccccc;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--dark-bg);
+    color: var(--dark-text);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    align-items: center;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Light Mode styles */
+body.light-mode {
+    --dark-bg: var(--light-bg);
+    --dark-surface: var(--light-surface);
+    --dark-text: var(--light-text);
+    --dark-text-light: var(--light-text-light);
+    --cyan-accent: var(--light-cyan-accent);
+    --cyan-accent-dark: var(--light-cyan-accent-dark);
+    --border-color: var(--light-border-color);
+}
+
+
+.page-wrapper {
+    display: flex;
+    flex: 1;
+    height: 100vh; /* Full viewport height */
+    overflow: hidden; /* Prevent scrollbars on the wrapper itself */
+}
+.span {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.sidebar {
+    transform: translateX(-100%);
+    position: fixed; /* Keeps sidebar in place */
+    top: 0;
+    left: 0;
+    width: 250px;
+    height: 100%;
+    background-color: #2e3047ef;
+    border-right: 1px solid #2e304780;
+    padding-top: 60px;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column; /* Organizes sidebar content vertically */
+    z-index: 999; /* Ensures sidebar is on top */
+    transition: transform 0.3s ease-in-out, background-color 0.3s ease, border-right-color 0.3s ease; /* For smooth slide-in/out and theme change */
+}
+
+.sidebar h4 {
+    color: var(--dark-text-light);
+}
+
+body.light-mode .sidebar h4 {
+    color: var(--light-text-light);
+}
+
+
+body.light-mode .sidebar {
+    background-color: #ffffffe8;
+    border-right-color: #cccccc90;
+}
+
+.sidebar .welcome-user {
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    transition: border-color 0.3s ease;
+}
+
+.sidebar .box3 {
+    margin-top: 30px;
+    flex-grow: 1; /* Pushes the buttons to the bottom */
+}
+
+.sidebar .box2, .sidebar .box3 {
+    width: 100%; /* Make buttons take full width */
+}
+
+.NewChatButton, .logout-button, .settings-help-button {
+    width: 100%;
+    margin-bottom: 10px;
+    text-align: center;
+    background-color: var(--cyan-accent);
+    color: var(--dark-bg);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.NewChatButton:hover, .logout-button:hover, .settings-help-button:hover {
+    background-color: var(--cyan-accent-dark);
+}
+
+body.light-mode .NewChatButton,
+body.light-mode .logout-button,
+body.light-mode .settings-help-button {
+    background-color: var(--light-cyan-accent);
+    color: var(--light-surface);
+}
+
+body.light-mode .NewChatButton:hover,
+body.light-mode .logout-button:hover,
+body.light-mode .settings-help-button:hover {
+    background-color: var(--light-cyan-accent-dark);
+}
+
+/* --- MAIN CONTENT LAYOUT --- */
+.main-content {
+    flex-grow: 1;
+    margin-left: 240px;
+    padding: 20px;
+    padding-top: 80px; 
+    width: calc(100% - 240px); /* Adjust width */
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+/* --- CONTAINER & HEADER (No Major Changes) --- */
+.container {
+    background-color: var(--dark-surface);
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    padding: 30px;
+    max-width: 999px;
+    min-width: 60%;
+    margin: 0 ;
+    box-sizing: border-box;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+body.light-mode .container {
+    background-color: var(--light-surface);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+    padding: 10px 20px;
+    margin-left: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    background-color: var(--dark-surface);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    height: 60px; 
+    box-sizing: border-box;
+}
+
+body.light-mode .header {
+    background-color: var(--light-surface);
+}
+
+.header h2 {
+    color: var(--cyan-accent);
+    margin: 0;
+    font-size: 1.8em;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+/* --- BUTTONS & INPUTS (Minor Tweaks) --- */
+button, .auth-link {
+    cursor: pointer;
+}
+/* ... your other button, input, chat-box styles remain the same ... */
+
+/* Keep your existing styles for chat-box, inputs, etc. here */
+select, input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: var(--dark-bg);
+    color: var(--dark-text);
+    font-size: 1em;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+}
+
+body.light-mode select,
+body.light-mode input[type="text"] {
+    border-color: var(--light-border-color);
+    background-color: var(--light-bg);
+    color: var(--light-text);
+}
+
+.input-send-container {
+    display: flex; /* Use flexbox to align items in a row */
+    align-items: center; /* Vertically center the items */
+    border: 1px solid var(--border-color); /* Add a border to the container */
+    border-radius: 25px; /* Rounded corners for the container */
+    padding: 5px 15px; /* Add some padding inside the container */
+    background-color: var(--dark-bg); /* White background for the container */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* subtle shadow */
+    margin-top: 20px; /* Space above the input container */
+    transition: border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+body.light-mode .input-send-container {
+    border-color: var(--light-border-color);
+    background-color: var(--light-bg);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+#userInput {
+    flex-grow: 1; /* Allow the input field to take up available space */
+    border: none; /* Remove default input border */
+    outline: none; /* Remove outline on focus */
+    padding: 8px 10px; /* Padding inside the input */
+    font-size: 1rem; /* Adjust font size */
+    background-color: transparent; /* Transparent background */
+    color: var(--dark-text);
+    transition: color 0.3s ease;
+}
+
+body.light-mode #userInput {
+    color: var(--light-text);
+}
+
+.icon-button, .clear-history-button {
+    background: none; /* Remove button background */
+    border: none; /* Remove button border */
+    cursor: pointer; /* Change cursor to pointer on hover */
+    padding: 8px; /* Padding for the icons */
+    font-size: 1.2rem; /* Size of the icons */
+    color: var(--dark-text-light); /* Icon color */
+    transition: color 0.2s ease-in-out; /* Smooth color transition */
+}
+
+.clear-history-button {
+    margin-left: 70px; /* Space between input and clear history button */
+}
+.icon-button:hover, .clear-history-button:hover {
+    color: var(--cyan-accent); /* Darker color on hover */
+}
+
+body.light-mode .icon-button, body.light-mode .clear-history-button {
+    color: var(--light-text-light);
+}
+
+body.light-mode .icon-button:hover, body.light-mode .clear-history-button:hover {
+    color: var(--light-cyan-accent);
+}
+
+
+.chat-box {
+    background-color: var(--dark-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    min-height: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    word-wrap: break-word;
+    color: var(--dark-text);
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+body.light-mode .chat-box {
+    background-color: var(--light-bg);
+    border-color: var(--light-border-color);
+    color: var(--light-text);
+}
+
+/* --- Speech Bubble Styles --- */
+.chat-message {
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    border-radius: 18px; /* More rounded corners for bubble effect */
+    max-width: 70%; /* Limit bubble width */
+    word-wrap: break-word; /* Ensure text wraps */
+}
+
+.chat-message p {
+    margin: 0; /* Remove default paragraph margin */
+}
+
+.user-message {
+    background-color: var(--cyan-accent); /* User message background */
+    color: var(--dark-bg); /* User message text color */
+    align-self: flex-end; /* Align to the right in flex container */
+    margin-left: auto; /* Push to the right */
+    border-top-right-radius: 1px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.light-mode .user-message {
+    background-color: var(--light-cyan-accent);
+    color: var(--light-surface);
+}
+
+.tutor-message {
+    background-color: var(--dark-surface); /* Tutor message background */
+    color: var(--dark-text); /* Tutor message text color */
+    align-self: flex-start; /* Align to the left in flex container */
+    margin-right: auto; /* Push to the left */
+    border-bottom-left-radius: 1px; /* For the tail */
+    transition: background-color 0.3s ease, color 0.3s ease;
+    position: relative;
+}
+
+body.light-mode .tutor-message {
+    background-color: var(--light-surface);
+    color: var(--light-text);
+}
+
+.rate-response-text {
+    margin-top: 20px; /* Space above the rating prompt */
+    margin-bottom: 10px; /* Space below the rating prompt */
+    font-size: 0.95rem;
+    color: var(--dark-text-light);
+    text-align: center; /* Center the text */
+    transition: color 0.3s ease;
+}
+
+body.light-mode .rate-response-text {
+    color: var(--light-text-light);
+}
+
+/* Container for the rating buttons */
+.rating-buttons {
+    display: flex; /* Use flexbox to arrange buttons side-by-side */
+    justify-content: center; /* Center the buttons horizontally */
+    gap: 15px; /* Space between the buttons */
+    margin-bottom: 20px; /* Space below the rating buttons */
+}
+
+/* Specific styling for the rate buttons (inherits from .icon-button) */
+.rate-button {
+    font-size: 1.5rem; /* Make the icons a bit larger */
+    padding: 10px 15px; /* Add more padding to make them clickable */
+    border: 1px solid var(--dark-surface); /* A subtle border */
+    border-radius: 50%; /* Make them circular */
+    background-color: none; /* Light background */
+    color: var(--dark-text-light); /* Default icon color */
+    transition: all 0.2s ease-in-out; /* Smooth transitions for hover effects */
+}
+
+body.light-mode .rate-button {
+    border: none;
+    background-color: none;
+    color: var(--light-text-light);
+}
+
+/* Hover effects for the rate buttons */
+.rate-button:hover {
+    background-color: var(--dark-bg); /* Lighter background on hover */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* More pronounced shadow on hover */
+    transform: translateY(-2px); /* Slight lift effect */
+}
+
+body.light-mode .rate-button:hover {
+    background-color: var(--light-border-color);
+}
+
+.rate-button:hover i.fa-thumbs-up {
+    color: var(--flash-success); /* Green for thumbs up */
+}
+
+.rate-button:hover i.fa-thumbs-down {
+    color: var(--flash-error); /* Red for thumbs down */
+}
+
+#feedback-status {
+    text-align: center;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.feedback-message.success {
+    color: var(--flash-success); /* Green for success */
+}
+
+.feedback-message.error {
+    color: var(--flash-error); /* Red for error */
+}
+
+.rating-popup {
+    position: absolute; /* Position relative to the parent with position: relative */
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Adjust for perfect centering */
+    background-color: #212121; /* Dark background color */
+    color: white; /* White text color */
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000; /* Ensure it's on top of other content */
+    opacity: 0; /* Initially hidden */
+    transition: opacity 0.3s ease-in-out;
+    pointer-events: none; /* Allows clicks to pass through when hidden */
+    font-size: 14px;
+}
+
+/* Style for when the popup is active */
+.rating-popup.show {
+    opacity: 1;
+    pointer-events: auto; /* Re-enable pointer events when visible */
+}
+
+button {
+    padding: 10px 18px;
+    border: none;
+
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 5px;
+    margin-right: 5px;
+    transition: background-color 0.2s;
+}
+
+
+.flash-message-container {
+    width: 100%;
+    max-width: 800px;
+    margin-top: 20px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.flash-message {
+    padding: 12px 20px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    font-weight: 500;
+    color: var(--dark-bg); /* Text color for flash messages */
+    box-sizing: border-box;
+}
+
+.flash-message.success {
+    background-color: var(--flash-success);
+}
+
+.flash-message.error {
+    background-color: var(--flash-error);
+}
+
+.flash-message.info {
+    background-color: var(--flash-info);
+}
+
+.feedback-message {
+    margin-top: 15px;
+    font-size: 0.95em;
+    color: var(--dark-text-light);
+    text-align: center;
+}
+
+.menu-toggle {
+    display: fixed;
+    background: none;
+    border: none;
+    color:#6c757d;
+    font-size: 24px;
+    padding: 0px;
+    margin-right: 15px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* This class will be toggled by JavaScript to show the sidebar */
+.sidebar.visible {
+    transform: translateX(0);
+}
+
+
+/* Settings Popup Styles */
+.settings-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000; /* Above everything else */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.settings-popup.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.settings-popup-content {
+    background-color: var(--dark-surface);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+    color: var(--dark-text);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.light-mode .settings-popup-content {
+    background-color: var(--light-surface);
+    color: var(--light-text);
+}
+
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--dark-text-light);
+    transition: color 0.3s ease;
+}
+
+body.light-mode .close-button {
+    color: var(--light-text-light);
+}
+
+.close-button:hover {
+    color: var(--cyan-accent);
+}
+
+body.light-mode .close-button:hover {
+    color: var(--light-cyan-accent);
+}
+
+.settings-popup-content h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: var(--cyan-accent);
+    text-align: center;
+    transition: color 0.3s ease;
+}
+
+body.light-mode .settings-popup-content h3 {
+    color: var(--light-cyan-accent);
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+    transition: border-color 0.3s ease;
+}
+
+body.light-mode .setting-item {
+    border-bottom-color: var(--light-border-color);
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+/* The switch - the box around the slider */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 45px;
+    height: 25px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* The slider */
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+    border-radius: 25px; /* Rounded slider */
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+    border-radius: 50%; /* Rounded handle */
+}
+
+input:checked + .slider {
+    background-color: var(--cyan-accent);
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px var(--cyan-accent);
+}
+
+input:checked + .slider:before {
+    -webkit-transform: translateX(20px);
+    -ms-transform: translateX(20px);
+    transform: translateX(20px);
+}
+
+/* Dark mode slider color */
+body.light-mode .slider {
+    background-color: #888;
+}
+
+body.light-mode input:checked + .slider {
+    background-color: var(--light-cyan-accent);
+}
+
+
+.help-button {
+    display: block;
+    width: 100%;
+    padding: 10px 15px;
+    background-color: var(--cyan-accent);
+    color: var(--dark-bg);
+    text-align: center;
+    border-radius: 5px;
+    text-decoration: none;
+    margin-top: 10px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.help-button:hover {
+    background-color: var(--cyan-accent-dark);
+}
+
+body.light-mode .help-button {
+    background-color: var(--light-cyan-accent);
+    color: var(--light-surface);
+}
+
+body.light-mode .help-button:hover {
+    background-color: var(--light-cyan-accent-dark);
+}
+
+.file-name-popup {
+    position: absolute;
+    bottom: calc(100% + 10px); /* Position above the icon, with some space */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #555; /* Dark background for the bubble */
+    color: white;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 0.8em;
+    white-space: nowrap; /* Prevent text from wrapping */
+    opacity: 0; /* Start hidden */
+    visibility: hidden; /* Start hidden */
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 10; /* Ensure it's above other elements */
+}
+
+.file-name-popup::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 100%; /* Point the arrow downwards */
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent; /* Arrow color matches bubble */
+}
+
+/* Show the popup when the parent (icon-button) is hovered or when a file is selected */
+.icon-button.has-file .file-name-popup {
+    opacity: 1;
+    visibility: visible;
+}
+
+.icon-button, .clear-history-button {
+    position: relative; /* Needed for absolute positioning of the popup */
+    display: inline-flex; /* Use flex to align icon and potentially the popup */
+    align-items: center;
+    justify-content: center;
+}
+
+/* Adjust the input-send-container to accommodate the popup */
+.input-send-container {
+    position: relative; /* Important for positioning the popup */
+}
+
+
+
+.sidebar h4 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    color: #eee;
+    border-bottom: 1px solid #555;
+    padding-bottom: 5px;
+}
+
+.chat-sessions-list {
+    margin-bottom: 10px; /* Space before settings/logout buttons */
+}
+
+.chat-session-item {
+    display: block; /* Make buttons take full width */
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 5px;
+    background: none;
+    color: var(--light-text-light);
+    border: none;
+    border-radius: 5px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    white-space: nowrap; /* Prevent text wrapping */
+    overflow: hidden; /* Hide overflowed text */
+    text-overflow: ellipsis; /* Add ellipsis for overflowed text */
+}
+
+.chat-session-item:hover {
+    background-color: var(--dark-text);
+    transform: translateX(3px); /* Slight hover effect */
+}
+
+.chat-session-item.active {
+    background-color: var(--border-color); /* Highlight active session */
+    font-weight: bold;
+}
+
+.welcome-user {
+    padding: 20px;
+    font-weight: bold;
+    display: block;
+    text-align: right;
+}
+
+.welcome-user .menu-toggle {
+    margin-right: 10px;
+}
+
+
+
+@media (max-width: 768px) {
+    
+    .menu-toggle {
+        display: block;
+    }
+
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 10px; 
+    }
+
+    .container {
+        padding: 15px;
+    }
+
+    .header h2 {
+        font-size: 1.5em;
+    }
+}
